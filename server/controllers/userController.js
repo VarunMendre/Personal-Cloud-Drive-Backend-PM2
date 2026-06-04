@@ -20,6 +20,7 @@ import {
   updateUserProfileService,
 } from "../services/user/userService.js";
 import { CustomError } from "../utils/CustomError.js";
+import User from "../models/userModel.js";
 
 export const getCurrentUser = asyncHandler(async (req, res) => {
   const result = await getCurrentUserService(req.user._id);
@@ -58,7 +59,8 @@ export const logOutById = asyncHandler(async (req, res) => {
 });
 
 export const getUserPassword = asyncHandler(async (req, res) => {
-  const hasPassword = !!(req.user.password && req.user.password.length > 0);
+  const dbUser = await User.findById(req.user._id).select("password");
+  const hasPassword = !!(dbUser && dbUser.password && dbUser.password.length > 0);
   return successResponse(res, { hasPassword });
 });
 
