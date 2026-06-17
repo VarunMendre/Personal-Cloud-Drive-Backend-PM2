@@ -6,6 +6,30 @@ provider:
   region: ap-south-1 
   memorySize: 1024 # High memory for all operations, including CPU-intensive bcrypt
   timeout: 30 # Adjust based on your app's needs
+  environment:
+    NODE_ENV: production
+    PORT: ${env:PORT, '4000'}
+    DB_URL: ${env:DB_URL}
+    REDIS_HOST: ${env:REDIS_HOST}
+    REDIS_PORT: ${env:REDIS_PORT}
+    REDIS_PASSWORD: ${env:REDIS_PASSWORD}
+    REDIS_USERNAME: ${env:REDIS_USERNAME}
+    MY_SECRET_KEY: ${env:MY_SECRET_KEY}
+    CLIENT_ORIGIN: ${env:CLIENT_ORIGIN}
+    CLIENT_URL: ${env:CLIENT_URL}
+    BUCKET_NAME: ${env:BUCKET_NAME}
+    CLOUDFRONT_PRIVATE_KEY: ${env:CLOUDFRONT_PRIVATE_KEY}
+    CLOUDFRONT_KEY_PAIR_ID: ${env:CLOUDFRONT_KEY_PAIR_ID}
+    CLOUDFRONT_DOMAIN: ${env:CLOUDFRONT_DOMAIN}
+    RAZORPAY_KEY_ID: ${env:RAZORPAY_KEY_ID}
+    RAZORPAY_KEY_SECRET: ${env:RAZORPAY_KEY_SECRET}
+    RAZORPAY_WEBHOOK_SECRET: ${env:RAZORPAY_WEBHOOK_SECRET}
+    OTP_RESEND_KEY: ${env:OTP_RESEND_KEY}
+    RESEND_API_KEY: ${env:RESEND_API_KEY}
+    GITHUB_CLIENT_ID: ${env:GITHUB_CLIENT_ID}
+    GITHUB_CLIENT_SECRET: ${env:GITHUB_CLIENT_SECRET}
+    GOOGLE_LOGIN_CLIENT_ID: ${env:GOOGLE_LOGIN_CLIENT_ID}
+    GOOGLE_DRIVE_CLIENT_ID: ${env:GOOGLE_DRIVE_CLIENT_ID}
   iam:
     role:
       statements:

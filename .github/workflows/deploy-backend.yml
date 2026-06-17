@@ -55,6 +55,8 @@ jobs:
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           REDIS_USERNAME: ${{ secrets.REDIS_USERNAME }}
           MY_SECRET_KEY: ${{ secrets.MY_SECRET_KEY }}
+          GOOGLE_LOGIN_CLIENT_ID: ${{ secrets.GOOGLE_LOGIN_CLIENT_ID }}
+          GOOGLE_DRIVE_CLIENT_ID: ${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}
           CLIENT_ORIGIN: ${{ secrets.CLIENT_ORIGIN }}
           BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
           CLOUDFRONT_PRIVATE_KEY: ${{ secrets.CLOUDFRONT_PRIVATE_KEY }}
