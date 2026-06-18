@@ -56,12 +56,19 @@ jobs:
           REDIS_USERNAME: ${{ secrets.REDIS_USERNAME }}
           MY_SECRET_KEY: ${{ secrets.MY_SECRET_KEY }}
           GOOGLE_LOGIN_CLIENT_ID: ${{ secrets.GOOGLE_LOGIN_CLIENT_ID }}
-          GOOGLE_DRIVE_CLIENT_ID: ${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}
           CLIENT_ORIGIN: ${{ secrets.CLIENT_ORIGIN }}
           BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
           CLOUDFRONT_PRIVATE_KEY: ${{ secrets.CLOUDFRONT_PRIVATE_KEY }}
           CLOUDFRONT_KEY_PAIR_ID: ${{ secrets.CLOUDFRONT_KEY_PAIR_ID }}
           CLOUDFRONT_DOMAIN: ${{ secrets.CLOUDFRONT_DOMAIN }}
+          CLIENT_URL: ${{ secrets.CLIENT_URL }}
+          RAZORPAY_KEY_ID: ${{ secrets.RAZORPAY_KEY_ID }}
+          RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
+          RAZORPAY_WEBHOOK_SECRET: ${{ secrets.RAZORPAY_WEBHOOK_SECRET }}
+          OTP_RESEND_KEY: ${{ secrets.OTP_RESEND_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          GITHUB_CLIENT_ID: ${{ secrets.GITHUB_CLIENT_ID }}
+          GITHUB_CLIENT_SECRET: ${{ secrets.GITHUB_CLIENT_SECRET }}
 
       - name: 📢 Telegram Notification (Success)
         if: success()
