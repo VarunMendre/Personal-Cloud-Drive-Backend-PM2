@@ -16,6 +16,7 @@ import { spawn } from "child_process";
 import { rateLimit } from "express-rate-limit";
 import { gitHubWebhook } from "./utils/gitHubWebhook.js";
 import { errorResponse } from "./utils/response.js";
+import { handleRazorpayError } from "./utils/razorpayErrorHandler.js";
 
 
 
@@ -108,12 +109,15 @@ app.use((err, req, res, next) => {
     return next(err);
   }
 
-  const status = err.statusCode || err.status || 500;
-  const extra = {};
-  if (err.data) extra.data = err.data;
-  if (err.fieldErrors) extra.fieldErrors = err.fieldErrors;
+  // standardise Razorpay errors using our helper
+  const processedErr = handleRazorpayError(err);
 
-  return errorResponse(res, err, status, extra);
+  const status = processedErr.statusCode || processedErr.status || 500;
+  const extra = {};
+  if (processedErr.data) extra.data = processedErr.data;
+  if (processedErr.fieldErrors) extra.fieldErrors = processedErr.fieldErrors;
+
+  return errorResponse(res, processedErr, status, extra);
 });
 
 if (!process.env.LAMBDA_TASK_ROOT) {

@@ -1,61 +1,57 @@
 import redisClient from "../config/redis.js";
 import Subscription from "../models/subscriptionModel.js";
 import User from "../models/userModel.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
-export default async function checkAuth(req, res, next) {
-  try {
-    const { sid } = req.signedCookies;
+const checkAuth = asyncHandler(async (req, res, next) => {
+  const { sid } = req.signedCookies;
 
-    if (!sid) {
-      res.clearCookie("sid");
-      return res.status(401).json({ error: "Not logged in!" });
-    }
-
-    const session = await redisClient.json.get(`session:${sid}`);
-
-    if (!session) {
-      const isEvicted = await redisClient.get(`eviction:${sid}`);
-      res.clearCookie("sid");
-
-      if (isEvicted) {
-        return res.status(401).json({ error: "Logged out due to login on another device" });
-      }
-      return res.status(401).json({ error: "Not logged in!" });
-    }
-    
-    const user = await User.findById(session.userId);
-    if (!user) {
-      res.clearCookie("sid");
-      return res.status(401).json({ error: "User not found!" });
-    }
-
-    let subscriptionStatus = "free";
-
-    if (user.subscriptionId) {
-      const sub = await Subscription.findOne({
-        razorpaySubscriptionId: user.subscriptionId,
-      });
-      if (sub) {
-        subscriptionStatus = sub.status;
-      }
-    }
-
-    req.user = {
-      _id: user._id,
-      role: user.role,
-      isDeleted: user.isDeleted,
-      rootDirId: user.rootDirId,
-      subscriptionStatus: subscriptionStatus,
-    };
-
-    next();
-  } catch (error) {
-    console.error("checkAuth failed:", error);
-    return res.status(503).json({
-      error: "Authentication service unavailable",
-    });
+  if (!sid) {
+    res.clearCookie("sid");
+    return res.status(401).json({ error: "Not logged in!" });
   }
-}
+
+  const session = await redisClient.json.get(`session:${sid}`);
+
+  if (!session) {
+    const isEvicted = await redisClient.get(`eviction:${sid}`);
+    res.clearCookie("sid");
+
+    if (isEvicted) {
+      return res.status(401).json({ error: "Logged out due to login on another device" });
+    }
+    return res.status(401).json({ error: "Not logged in!" });
+  }
+  
+  const user = await User.findById(session.userId);
+  if (!user) {
+    res.clearCookie("sid");
+    return res.status(401).json({ error: "User not found!" });
+  }
+
+  let subscriptionStatus = "free";
+
+  if (user.subscriptionId) {
+    const sub = await Subscription.findOne({
+      razorpaySubscriptionId: user.subscriptionId,
+    });
+    if (sub) {
+      subscriptionStatus = sub.status;
+    }
+  }
+
+  req.user = {
+    _id: user._id,
+    role: user.role,
+    isDeleted: user.isDeleted,
+    rootDirId: user.rootDirId,
+    subscriptionStatus: subscriptionStatus,
+  };
+
+  next();
+});
+
+export default checkAuth;
 
 export const checkNotRegularUser = (req, res, next) => {
   if (req.user.role !== "User") return next();
