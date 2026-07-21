@@ -94,7 +94,10 @@ export const changePlanService = async (userId, planId) => {
         `Upgrade initiated: User ${userId} → Plan ${planId}, Bonus: ${bonusDays} days`
       );
 
-      return { subscriptionId: newSubscription.id };
+      return { 
+        subscriptionId: newSubscription.id,
+        razorpayKeyId: process.env.RAZORPAY_KEY_ID
+      };
 
     } catch (dbError) {
       // If DB save failed, we must cancel the created Razorpay subscription to avoid charging user

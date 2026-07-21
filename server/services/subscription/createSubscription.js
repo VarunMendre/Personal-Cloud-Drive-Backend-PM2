@@ -24,7 +24,10 @@ export const createSubscriptionService = async (userId, planId) => {
         
         // Only reuse if it's the SAME plan. If user picked a different plan, we need a new subscription!
         if (existingSubscription.status === "created" && existingSubscription.planId === planId) {
-            return { subscriptionId: existingSubscription.razorpaySubscriptionId };
+            return { 
+                subscriptionId: existingSubscription.razorpaySubscriptionId,
+                razorpayKeyId: process.env.RAZORPAY_KEY_ID
+            };
         }
         
         // If it was 'created' but for a DIFFERENT plan, we'll let it create a new one below.
@@ -56,7 +59,10 @@ export const createSubscriptionService = async (userId, planId) => {
             await session.commitTransaction();
             session.endSession();
 
-            return { subscriptionId: newSubscription.id };
+            return { 
+                subscriptionId: newSubscription.id,
+                razorpayKeyId: process.env.RAZORPAY_KEY_ID
+            };
 
         } catch (dbError) {
              // If DB write fails, cancel the external subscription to prevent billing ghost accounts
