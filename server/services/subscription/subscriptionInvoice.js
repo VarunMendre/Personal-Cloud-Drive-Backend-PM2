@@ -6,7 +6,7 @@ export const getSubscriptionInvoiceService = async (userId) => {
   // get the most recent active subscription
   const subscription = await Subscription.findOne({
     userId: userId,
-    status: "active",
+    status: { $in: ["active", "past_due", "created", "authenticated", "pending"] },
   }).sort({ createdAt: -1 });
 
   if (!subscription) {
