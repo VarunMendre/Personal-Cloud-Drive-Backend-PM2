@@ -1,0 +1,3 @@
+## 2026-08-06 - Flat Path-Based Tree Optimization
+**Learning:** The Directory model stores the entire ancestor tree path in an array field called `path`. Using recursive database queries to walk subdirectories and fetch nested items is a major performance bottleneck (O(N) queries, heavy network traffic, and high memory usage). Since we have the `path` index containing ancestor directory IDs, we can retrieve all descendant directories at any depth in a single O(1) database call.
+**Action:** When working with tree or hierarchical structures in MongoDB/Mongoose, check if an ancestor path array (like `path`) exists. Always prefer flat, array-based query operations (like `$in` and field containment) over recursive async function calls.

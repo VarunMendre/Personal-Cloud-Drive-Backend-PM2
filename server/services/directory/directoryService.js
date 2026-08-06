@@ -4,21 +4,21 @@ import { deletes3Files } from "../s3.js";
 import { updateDirectorySize } from "../../utils/updateDirectorySize.js";
 import { CustomError } from "../../utils/CustomError.js";
 
-// Recursive function to count all nested files and folders
+// BOLT OPTIMIZATION: Replaced recursive O(N) database queries with a single O(1) query.
+// Since every subdirectory under dirId has dirId in its path property, we can find all nested
+// subdirectories and files in parallel using flat queries, saving many roundtrips and avoiding loading large numbers of documents.
 async function getRecursiveCounts(dirId) {
-  const filesInDir = await File.find({ parentDirId: dirId }).lean();
-  const subdirsInDir = await Directory.find({ parentDirId: dirId }).lean();
-  
-  let totalFiles = filesInDir.length;
-  let totalFolders = subdirsInDir.length;
-  
-  // Recursively count in each subdirectory
-  for (const subdir of subdirsInDir) {
-    const counts = await getRecursiveCounts(subdir._id);
-    totalFiles += counts.totalFiles;
-    totalFolders += counts.totalFolders;
-  }
-  
+  // Find all nested directory IDs under dirId using the path field
+  const nestedDirs = await Directory.find({ path: dirId }).select("_id").lean();
+  const nestedDirIds = nestedDirs.map((d) => d._id);
+
+  // Count files in this directory and all its subdirectories in a single optimized DB call
+  const totalFiles = await File.countDocuments({
+    parentDirId: { $in: [dirId, ...nestedDirIds] },
+  });
+
+  const totalFolders = nestedDirs.length;
+
   return { totalFiles, totalFolders };
 }
 
@@ -31,15 +31,20 @@ export const getDirectoryService = async (id, userId) => {
     .lean();
 
   if (!directoryData) {
-    throw new CustomError("Directory not found or you do not have access to it!", 404);
+    throw new CustomError(
+      "Directory not found or you do not have access to it!",
+      404,
+    );
   }
 
   const files = await File.find({ parentDirId: directoryData._id }).lean();
   const directories = await Directory.find({ parentDirId: id }).lean();
-  
+
   // Get recursive counts for this directory
-  const { totalFiles, totalFolders } = await getRecursiveCounts(directoryData._id);
-  
+  const { totalFiles, totalFolders } = await getRecursiveCounts(
+    directoryData._id,
+  );
+
   return {
     ...directoryData,
     files: files.map((dir) => ({ ...dir, id: dir._id })),
@@ -61,7 +66,7 @@ export const createDirectoryService = async (dirname, parentDirId, userId) => {
   }
 
   const newPath = [...(parentDir.path || []), parentDir._id];
-   
+
   await Directory.create({
     name: dirname,
     parentDirId,
@@ -76,29 +81,31 @@ export const renameDirectoryService = async (dirId, newDirName, userId) => {
       _id: dirId,
       userId: userId,
     },
-    { name: newDirName }
+    { name: newDirName },
   );
 
   if (!result) {
-    throw new CustomError("Directory not found or not authorized to rename", 404);
+    throw new CustomError(
+      "Directory not found or not authorized to rename",
+      404,
+    );
   }
 };
 
+// BOLT OPTIMIZATION: Replaced recursive getDirectoryContents with flat queries.
+// It retrieves all subdirectories at any depth using the path index, and then fetches
+// all related file details in a single query rather than walking the folder tree asynchronously.
 async function getDirectoryContents(id) {
-  let files = await File.find({ parentDirId: id })
+  // Find all nested directory IDs under the target directory
+  const directories = await Directory.find({ path: id }).select("_id").lean();
+  const nestedDirIds = directories.map((d) => d._id);
+
+  // Get all files belonging to the parent directory or any of the subdirectories
+  const files = await File.find({
+    parentDirId: { $in: [id, ...nestedDirIds] },
+  })
     .select("extension")
     .lean();
-  let directories = await Directory.find({ parentDirId: id })
-    .select("_id")
-    .lean();
-
-  for (const { _id } of directories) {
-    const { files: childFiles, directories: childDirectories } =
-      await getDirectoryContents(_id);
-
-    files = [...files, ...childFiles];
-    directories = [...directories, ...childDirectories];
-  }
 
   return { files, directories };
 }
@@ -115,7 +122,9 @@ export const deleteDirectoryService = async (dirId, userId) => {
 
   const { files, directories } = await getDirectoryContents(dirId);
 
-  const keys = files.map(({_id, extension}) => ({Key:`${_id}${extension}`}))
+  const keys = files.map(({ _id, extension }) => ({
+    Key: `${_id}${extension}`,
+  }));
 
   if (keys.length > 0) {
     await deletes3Files(keys);
